@@ -10,11 +10,12 @@ import java.util.Iterator;
 /**
  * 通道：SocketChannel
  * 可以理解为：
- *  1.A通道以事件Event-A注册到Selector-A时，会创建SelectionKey-A。SelectionKey-A关联A通道。同时事件为Event-A。
+ *  1.A通道以事件Event-A注册到Selector-A时，会创建SelectionKey-A。SelectionKey-A关联A通道。同时关联 事件为Event-A。
  *  2.SelectionKey-A会添加到Selector-A的keys集合里。
  *  3.select后，如果发现A通道的请求触发了Event-A了，就会将SelectionKey-A添加到selectedKeys集合里，TODO 注意！一般遍历拿到key后删除是删除selectedKeys的数据，而不是keys。
  *  4.通过遍历selectedKeys拿到SelectionKey-A，再通过SelectionKey-A拿到A通道，处理通道里的数据。
  *  5.即:一次连接一个通道，一个通道能处理多次请求。
+ *  6.TODO NIO里一个Selector本质是单线程轮询，其中一个请求处理阻塞了，还是不能处理其他请求。
  *  TODO 1:NIO是如何区分来自不同进程请求的通道？（感觉是基于底层的Socket）
  *  TODO 2:如果关闭了通道，那为什么keys里不删除该通道的key？
  */
@@ -63,7 +64,7 @@ public class Server {
                     SocketChannel channel =(SocketChannel) key.channel();
                     //TODO 可以看到，这个socketChannel和上面连接时获取的socketChannel是同一个
                     System.out.println("读时accept的hashCode是："+channel.hashCode());
-                    ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+                    ByteBuffer byteBuffer = ByteBuffer.allocate(2);
                     int read = 10;
                     //TODO read为0：已经没有东西可以读了。但通道仍未关闭。read为-1，表示客户端的连接已单方面关闭。但服务端仍能收到事件，所以此时要服务端关闭通道，否则会一直循环触发读事件，且读到的内容为00000000000000000000000000000000
                     while(true) {
@@ -73,6 +74,7 @@ public class Server {
                             break;
                         }else if(read == -1){
                             channel.close();
+                            key.cancel();
                             break;
                         }
                         byteBuffer.flip();
