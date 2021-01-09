@@ -1,2 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4" />
+
+<module type="JAVA_MODULE" version="4"> 
+  <component name="NewModuleRootManager"> 
+    <output url="file://$MODULE_DIR$/target/classes"/>  
+    <output-test url="file://$MODULE_DIR$/target/test-classes"/>  
+    <content> 
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false"/>
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true"/>
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" isTestSource="false"/>
+      <excludeFolder url="file://$MODULE_DIR$/target"/>
+    </content>  
+    <orderEntry scope="TEST" type="module-library"> 
+      <library> 
+        <SOURCES/>  
+        <CLASSES>
+          <root url="jar://D:/Works/maven-repo/junit/junit/4.11/junit-4.11.jar!/"/>
+        </CLASSES>
+      </library> 
+    </orderEntry>  
+    <orderEntry scope="TEST" type="module-library"> 
+      <library> 
+        <SOURCES/>  
+        <CLASSES>
+          <root url="jar://D:/Works/maven-repo/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar!/"/>
+        </CLASSES>
+      </library> 
+    </orderEntry>  
+    <orderEntry type="module-library" exported=""> 
+      <library> 
+        <SOURCES> 
+          <root url="jar://D:/Works/maven-repo/io/netty/netty-all/4.1.20.Final/netty-all-4.1.20.Final-sources.jar!/"/>
+        </SOURCES>  
+        <CLASSES>
+          <root url="jar://D:/Works/maven-repo/io/netty/netty-all/4.1.20.Final/netty-all-4.1.20.Final.jar!/"/>
+        </CLASSES>
+      </library> 
+    </orderEntry> 
+  </component> 
+</module>

@@ -1,5 +1,6 @@
 package com.genn.Netty;
 
+import com.genn.Netty.Handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -23,25 +24,30 @@ public class NettyServerDemo {
         /*
             设置启动参数
          */
-        ServerBootstrap config = new ServerBootstrap();
-        config.group(bossGroup,workerGroup).    //设置两个线程组
-                channel(NioServerSocketChannel.class). //设置NioSocketChannel来封装ServerSocketChannel
-                option(ChannelOption.SO_BACKLOG,128). //线程队列等待连接个数
-                childOption(ChannelOption.SO_KEEPALIVE,true). //设置保持活动连接状态
-                childHandler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(null);  //获取channel的pipeLine
-            }
-        });  //设置Handler,目前只加一个null
+        try {
+            ServerBootstrap config = new ServerBootstrap();
+            config.group(bossGroup, workerGroup).    //设置两个线程组
+                    channel(NioServerSocketChannel.class). //设置NioSocketChannel来封装ServerSocketChannel
+                    option(ChannelOption.SO_BACKLOG, 128). //线程队列等待连接个数
+                    childOption(ChannelOption.SO_KEEPALIVE, true). //设置保持活动连接状态
+                    childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new NettyServerHandler());  //获取channel的pipeLine
+                }
+            });  //设置Handler
 
         /*
             绑定端口并且同步，相当于启动服务器了
          */
-        ChannelFuture sync = config.bind(8080).sync();
+            ChannelFuture sync = config.bind(8080).sync();
 
 
-        //对关闭通道进行监听
-        sync.channel().closeFuture().sync();
+            //对关闭通道进行监听
+            sync.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
     }
 }

@@ -37,3 +37,25 @@
 
 
 # Netty的线程模型
+
+​	了解Netty的线程模型前，先了解一下几个概念：
+
+​	1.EventLoop
+
+​		封装着一个Selector，每一个EventLoop对应着一个**EventLoop线程**。Netty默认根据处理器核数提供了一个推荐值，即线程数&EventLoop的个数
+
+​	private static final int DEFAULT_EVENT_LOOP_THREADS; static {   DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil.getInt(       "io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 2));   if (logger.isDebugEnabled()) {     logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);   } }
+
+​	2.EventLoopGroup
+
+​		一组EventLoop的封装，可以理解hannelPipeLine为EventLoop池。EventLoopGroup提供了next接口，可以按照**一定规则**在EventLoopGroup里取出一个EventLoop使用
+
+​	3.ChannelPipeline
+
+​		在Netty中每一个SocketChannel维护着一个ChannelPipeline实例，每一个ChannelPipeline维护着一个ChannelHandler链表。ChannelPipeline的默认实现是DefaultChannelPipeline。ChannelHandler有两个实现，ChannelInBoundHandlerAdapter与ChannelOutBoundHandlerAdapter，前者用来**处理来自客户端的请求**，后者**处理发送给客户端请求**。我们可以自定义ChannelHandler的实现类，将其放入ChannelPipeline。当事件触发后，ChannelPipeline会根据不同的类型调用不同的Handler处理。**ChannelPipeline本很是责任链模式的一个变种**。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181105212249587.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L01lbWVyeV9sYXN0,size_16,color_FFFFFF,t_70)
+
+​	在Netty的线程模型中，有两个EventLoopGroup：Boss组和Worker组。Boss组调用next选出一个Boss来处理Accept事件，处理完成后得到一个socketChannel交给Worker组，此时Worker组也会调用next选出一个Worker，将从Boss里得到的socketChannel注册到自己的Selector上，最后等待该连接的事件触发(select())。**通常情况下，Boss组建议只有一个Boss，当然也可以设置多个Boss。**
+
+​	当Worker里一个连接的事件触发后，会通过SelectionKey找到socketChannel与socketChannel绑定的ChannelPipeline，并将socketChannel交给ChannelPipeline处理，ChannelPipeline会根据事件类型，调用对应的Handler来处理请求，最后响应给客户端。
