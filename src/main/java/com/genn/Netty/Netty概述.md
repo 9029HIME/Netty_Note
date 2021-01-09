@@ -42,9 +42,22 @@
 
 ​	1.EventLoop
 
-​		封装着一个Selector，每一个EventLoop对应着一个**EventLoop线程**。Netty默认根据处理器核数提供了一个推荐值，即线程数&EventLoop的个数
+​		封装着一个Selector，每一个EventLoop对应着一个**EventLoop线程**。Netty默认根据处理器核数提供了一个推荐值，即线程数&EventLoop的个数（io.netty.channel.MultithreadEventLoopGroup#MultithreadEventLoopGroup(int, java.util.concurrent.Executor, java.lang.Object...)）
 
-​	private static final int DEFAULT_EVENT_LOOP_THREADS; static {   DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil.getInt(       "io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 2));   if (logger.isDebugEnabled()) {     logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);   } }
+​		具体效果看com.genn.Netty.Handler.NettyServerHandler：21
+
+```java
+private static final int DEFAULT_EVENT_LOOP_THREADS;
+
+static {
+    DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil.getInt(
+            "io.netty.eventLoopThreads", NettyRuntime.availableProcessors() * 2));
+
+    if (logger.isDebugEnabled()) {
+        logger.debug("-Dio.netty.eventLoopThreads: {}", DEFAULT_EVENT_LOOP_THREADS);
+    }
+}
+```
 
 ​	2.EventLoopGroup
 
@@ -59,3 +72,27 @@
 ​	在Netty的线程模型中，有两个EventLoopGroup：Boss组和Worker组。Boss组调用next选出一个Boss来处理Accept事件，处理完成后得到一个socketChannel交给Worker组，此时Worker组也会调用next选出一个Worker，将从Boss里得到的socketChannel注册到自己的Selector上，最后等待该连接的事件触发(select())。**通常情况下，Boss组建议只有一个Boss，当然也可以设置多个Boss。**
 
 ​	当Worker里一个连接的事件触发后，会通过SelectionKey找到socketChannel与socketChannel绑定的ChannelPipeline，并将socketChannel交给ChannelPipeline处理，ChannelPipeline会根据事件类型，调用对应的Handler来处理请求，最后响应给客户端。
+
+# Netty源码与模型对应
+
+## EventLoop
+
+​	![image-20210109182307826](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210109182307826.png)
+
+每一个EventLoop都有他自己的selector
+
+## channel、channelPipeline、ctx
+
+具体效果看com.genn.Netty.Handler.NettyServerHandler：22
+
+![image-20210109195718486](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210109195718486.png)
+
+![image-20210109195740609](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210109195740609.png)
+
+
+
+# TaskQueue
+
+​	如果Handler的一些请求处理比较耗时（如channelRead()的时候要进行耗时很久的IO查询），会导致整个pipeline的流程阻塞，因此可以将这些耗时的任务交给TaskQueue进行异步处理，**TaskQueue存在于EventLoop里，与SocketChannel有绑定关系**
+
+​	TODO taskQueue任务的执行线程应该和EventLoop线程一致，并非线程池，只是有个任务队列先将任务暂存起来（待验证）

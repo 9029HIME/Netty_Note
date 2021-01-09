@@ -17,9 +17,8 @@ public class NettyServerDemo {
             BossGroup与WorkerGroup
             1.BossGroup只处理accept请求，workerGroup处理read和write请求
             2.两个group在正式运行时，都是死循环
-
          */
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         /*
             设置启动参数

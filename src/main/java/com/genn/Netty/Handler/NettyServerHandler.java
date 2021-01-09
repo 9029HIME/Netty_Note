@@ -2,6 +2,7 @@ package com.genn.Netty.Handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
@@ -16,8 +17,11 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        Channel channel = ctx.channel();
+        System.out.println(String.format("当前线程：%s,当前EventLoop：%s", Thread.currentThread().getName(),channel.eventLoop()));
+        System.out.println(String.format("channel是%s,channel内的pipeline是%s,ctx中的pipeline是%s",channel,channel.pipeline(),ctx.pipeline()));
         ByteBuf content = (ByteBuf) msg;
-        System.out.println("caonima："+content.toString(CharsetUtil.UTF_8));
+        System.out.println("来自客户端的信息："+content.toString(CharsetUtil.UTF_8));
         System.out.println("客户端地址："+ctx.channel().remoteAddress());
 
     }
