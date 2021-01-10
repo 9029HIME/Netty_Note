@@ -2,10 +2,7 @@ package com.genn.Netty;
 
 import com.genn.Netty.Handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -40,6 +37,17 @@ public class NettyServerDemo {
             绑定端口并且同步，相当于启动服务器了
          */
             ChannelFuture sync = config.bind(8080).sync();
+            //这里只是举个例子 如果bind不同步的话，主线程跑完就关掉了
+            sync.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if(future.isSuccess()){
+                        System.out.println("端口8080监听成功");
+                    }else{
+                        System.out.println("监听失败");
+                    }
+                }
+            });
 
 
             //对关闭通道进行监听

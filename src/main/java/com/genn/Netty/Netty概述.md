@@ -93,6 +93,14 @@ static {
 
 # TaskQueue
 
-​	如果Handler的一些请求处理比较耗时（如channelRead()的时候要进行耗时很久的IO查询），会导致整个pipeline的流程阻塞，因此可以将这些耗时的任务交给TaskQueue进行异步处理，**TaskQueue存在于EventLoop里，与SocketChannel有绑定关系**
+​	如果Handler的一些请求处理比较耗时（如channelRead()的时候要进行耗时很久的IO查询），会导致整个pipeline的流程阻塞，因此可以将这些耗时的任务交给TaskQueue进行异步处理（**其实这个异步处理是稍后再处理罢了**），**TaskQueue存在于EventLoop里，与SocketChannel有绑定关系**
 
-​	TODO taskQueue任务的执行线程应该和EventLoop线程一致，并非线程池，只是有个任务队列先将任务暂存起来（待验证）
+​	taskQueue任务的执行线程应该和EventLoop线程一致，并非线程池，只是有个任务队列先将任务暂存起来，然后按顺序执行
+
+​	![image-20210110121302937](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210110121302937.png)
+
+# 异步模型
+
+​	Netty中提供了Future异步机制，假设我要运行一个x()函数，他的执行需要耗比较久的时间，如果同步运行那整个主线程都会阻塞直到x()调用完毕。而Future异步机制可以是x()的调用立马返回一个Future对象f（此时x的执行应该交给其它线程了），调用f的addListen()函数添加一个或多个listener实例对象。当x调用完毕后会回调listener链表里所有listener的operationComplete()函数。你也可以直接调用f.get()方法进行阻塞，这样和同步模式没什么区别。**其实这里的设计和Callable的返回值Future有一点类似，且用到了观察者设计模式。**
+
+​	![image-20210110170338771](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210110170338771.png![image-20210110172649152](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210110172649152.png)

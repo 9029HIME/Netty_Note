@@ -19,7 +19,23 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Channel channel = ctx.channel();
         System.out.println(String.format("当前线程：%s,当前EventLoop：%s", Thread.currentThread().getName(),channel.eventLoop()));
-        System.out.println(String.format("channel是%s,channel内的pipeline是%s,ctx中的pipeline是%s",channel,channel.pipeline(),ctx.pipeline()));
+        ctx.channel().eventLoop().execute(()->{
+            try {
+                Thread.sleep(3000);
+                System.out.println(String.format("任务1睡醒了，他的线程是%s", Thread.currentThread().getName()));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        });
+        ctx.channel().eventLoop().execute(()->{
+            try {
+                Thread.sleep(3000);
+                System.out.println(String.format("任务2睡醒了，他的线程是%s", Thread.currentThread().getName()));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        });
+//        System.out.println(String.format("channel是%s,channel内的pipeline是%s,ctx中的pipeline是%s",channel,channel.pipeline(),ctx.pipeline()));
         ByteBuf content = (ByteBuf) msg;
         System.out.println("来自客户端的信息："+content.toString(CharsetUtil.UTF_8));
         System.out.println("客户端地址："+ctx.channel().remoteAddress());
