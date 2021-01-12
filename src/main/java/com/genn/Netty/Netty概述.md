@@ -104,3 +104,36 @@ static {
 ​	Netty中提供了Future异步机制，假设我要运行一个x()函数，他的执行需要耗比较久的时间，如果同步运行那整个主线程都会阻塞直到x()调用完毕。而Future异步机制可以是x()的调用立马返回一个Future对象f（此时x的执行应该交给其它线程了），调用f的addListen()函数添加一个或多个listener实例对象。当x调用完毕后会回调listener链表里所有listener的operationComplete()函数。你也可以直接调用f.get()方法进行阻塞，这样和同步模式没什么区别。**其实这里的设计和Callable的返回值Future有一点类似，且用到了观察者设计模式。**
 
 ​	![image-20210110170338771](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210110170338771.png![image-20210110172649152](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210110172649152.png)
+
+
+
+# Netty各个组件
+
+## ChannelHandler
+
+​	在Netty中用来处理实际的业务，处理完成后将任务转发到Pipeline链的下一个ChannelHandler（类责任链模式）。一般是实现ChannelHandler的子类以创建Handler。Handler有其生命周期内一系列行为对应的方法。
+
+## Pipeline
+
+​	ChannelPipeline本质上是一条ChannelHandlerContext双向链表（就是那个ctx），有head和tail指针，而每个ctx里又关联着一个ChannelHandler（除了head和tail指针），所以也有人说它是ChannelHandler链表。
+
+![image-20210112211330759](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210112211330759.png)
+
+​	值得注意的是，head和tail并没有指定对应的handler。
+
+### 入站（栈）与出站（栈）
+
+​	首先要明确一点！**入与出是以服务端为主观视角**，一个channel只有一个pipeline，一个pipeline只有一条ctx链，**即一个channel对应一条ctx链**。head的一端是客户端，tail一端是服务端。有以下这条链。
+
+
+
+​	Client	head ↔️ inboundHandler1 ↔️ outboundHandler2 ↔️ inboundHandler3 ↔️ outboundHandler4 ↔️ tail	Server
+
+​	
+
+​	我假设handler的添加都是以addLast()形式，那添加顺序是handler1 → handler2 → handler3 → handler4 。如果是入站，即代表数据流是从Client到Server，ctx链的调用顺序是inboundHandler1 → inboundHandler3，跳过outboundHandler。如果是出栈，即代表数据流是从Server到Client，ctx链的调用顺序是outboundHandler4→ outboundHandler2，跳过inboundHandler。（因为出站的顺序刚好与出栈类似，所以以出栈的形式更好理解）
+
+​	**有些Handler即是inbound也是outbound，即无论哪个方向，都会调用。**
+
+![image-20210112213132089](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210112213132089.png)
+

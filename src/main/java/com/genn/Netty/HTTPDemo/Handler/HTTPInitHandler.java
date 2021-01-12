@@ -10,5 +10,6 @@ public class HTTPInitHandler extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) throws Exception {
         //添加handler
         ch.pipeline().addLast("encodec",new HttpServerCodec()).addLast("responseHandler1",new HTTPServeriHandler());
+        System.out.println();
     }
 }

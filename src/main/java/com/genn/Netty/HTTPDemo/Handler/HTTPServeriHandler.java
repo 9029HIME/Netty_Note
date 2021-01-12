@@ -36,6 +36,12 @@ public class HTTPServeriHandler extends SimpleChannelInboundHandler<HttpObject> 
                 System.out.println(String.format("请求头：%s,请求体：%s",next.getKey(),next.getValue()));
             }
 
+            //TODO 在这里也可以对指定路径进行拦截或分派，可以做到类似MVC的效果
+            String uri = request.uri();
+            if(uri.equals("/favicon.ico")){
+                return;
+            }
+
 
             //做出响应
             ByteBuf content = Unpooled.copiedBuffer("你好呀我是服务器", CharsetUtil.UTF_8);
