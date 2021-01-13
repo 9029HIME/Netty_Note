@@ -24,7 +24,7 @@ public class NettyServerDemo {
             ServerBootstrap config = new ServerBootstrap();
             config.group(bossGroup, workerGroup).    //设置两个线程组
                     channel(NioServerSocketChannel.class). //设置NioSocketChannel来封装ServerSocketChannel
-                    option(ChannelOption.SO_BACKLOG, 128). //线程队列等待连接个数
+                    option(ChannelOption.SO_BACKLOG, 128). //TCP/IP协议中的backlog参数，即可连接队列大小
                     childOption(ChannelOption.SO_KEEPALIVE, true). //设置保持活动连接状态
                     childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
