@@ -123,7 +123,7 @@ static {
 
 ### 入站（栈）与出站（栈）
 
-​	首先要明确一点！**入与出是以服务端为主观视角**，一个channel只有一个pipeline，一个pipeline只有一条ctx链，**即一个channel对应一条ctx链**。head的一端是客户端，tail一端是服务端。有以下这条链。
+​	首先要明确一点！**入与出是以pipeline所在的一端为主观视角**，一个channel只有一个pipeline，一个pipeline只有一条ctx链，**即一个channel对应一条ctx链**。我们以服务端为主观视角，head的一端是客户端，tail一端是服务端。有以下这条链。
 
 
 
