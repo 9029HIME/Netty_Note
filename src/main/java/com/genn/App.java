@@ -1,5 +1,7 @@
 package com.genn;
 
+import java.util.Random;
+
 /**
  * Hello world!
  *

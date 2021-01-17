@@ -1,0 +1,39 @@
+syntax = "proto3";  //protobuf版本号
+option optimize_for = SPEED;  //加快解析
+option java_outer_classname = "ProtoData";//java外部类名，也是java文件名
+option java_package = "com.genn.N08_Protobuf"; //生成的Java类所属包名
+
+//Protobuf是基于message来管理数据的
+message Student{  //会在ProtoData里生成一个内部类Student，Student是真正发送，进行序列化的对象
+  int64 id = 1;   //Student类中有一个属性，名为id，类型为int64（在Java里会转成long类型），TODO 1表示属性的序号，并非值
+  string name = 2;
+}
+
+message Teacher{
+  string name = 1;
+  int32  age = 2;
+}
+
+//在Protobuf里，可以通过message来管理其他message(我觉得除了以下的方式，还会用更灵活的方式)
+message Payload{
+  /*
+  先定义一个枚举类，用来判断Payload的具体类型是什么
+    TODO 这里是逻辑关联，需要开发者通过枚举具体值来判断，并没有很强硬的物理关键
+   */
+  enum DataType{
+    TYPE_STUDENT = 0; //枚举里的数值不代表属性序号，而是具体值
+    TYPE_TEACHER = 1;
+  }
+
+  //在Payload里定义一个类型为DataType，变量名为type的属性
+  DataType type = 1;
+
+  /*
+  在Payload里面定义一个Student对象和Teacher对象，即上面定义好的Student与Teacher类型
+  oneof代表着，一个payload对象里，只能包含[Student对象或Teacher对象]中的其中一个，不能两个都有
+   */
+  oneof body{
+    Student student = 2;
+    Teacher teacher = 3;
+  }
+}
