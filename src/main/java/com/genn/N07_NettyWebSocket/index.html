@@ -13,13 +13,11 @@
             var responseArea = document.getElementById("response");
             responseArea.value = responseArea.value + "\n" + "连接开启了";
         }
-
         //如果有服务端的消息，会调用这个回显消息到页面
         socket.onmessage = function (response){
             var responseArea = document.getElementById("response");
             responseArea.value = responseArea.value + "\n" + response.data;
         }
-
         //如果感觉到连接关闭（不管是自己关还是服务端关，调用这个）
         socket.onclose = function (ev){
             var responseArea = document.getElementById("response");
@@ -28,7 +26,6 @@
     }else{
         alert("这个浏览器不支持webSocket")
     }
-
     function sendMsg(message){
         if(!window.socket){
             alert("这个浏览器不支持webSocket");

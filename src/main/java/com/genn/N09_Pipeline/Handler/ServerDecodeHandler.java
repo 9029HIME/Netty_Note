@@ -20,6 +20,7 @@ public class ServerDecodeHandler extends ByteToMessageDecoder {
         /*
         如果可读的byte数≥8，就拿8个字节转成Long
         TODO 为什么用if而不是while？
+            只要ByteBuf还有数据，decode方法就会被调用多次，直到读完
          */
         if(in.readableBytes()>=8){
             out.add(in.readLong());
