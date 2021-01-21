@@ -42,7 +42,10 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+        //验证一个连接是否对应一个pipeline
 //        System.out.println(String.format("当前线程：%s,当前EventLoop：%s，当前pipeline：%s", Thread.currentThread().getName(),ctx.channel().eventLoop(),ctx.pipeline().hashCode()));
+        //验证一个连接是否对应一个handler
+//        System.out.println(String.format("当前线程：%s,当前EventLoop：%s，当前handler：%s", Thread.currentThread().getName(),ctx.channel().eventLoop(),this.hashCode()));
         Channel myself = ctx.channel();
         System.out.println(String.format("[ip为：%s的用户]：%s",myself.remoteAddress(),msg));
         channelGroup.forEach(x->{

@@ -15,7 +15,7 @@ public class NettyServerDemo {
             2.两个group在正式运行时，都是死循环
          */
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup(2);
         /*
             设置启动参数
          */

@@ -7,7 +7,7 @@
 ## blocking IO
 
 ​	即阻塞IO，步骤是进程调用recvfrom()函数，此时进程让系统调用BLOCK，将自己变为阻塞状态（阻塞状态时不占用CPU资源）。recvfrom()函数被调用后kernel等待数据的到来，直到数据准备好了（如收到了一个完整TCP/UDP包的信息），Kernel会将数据拷贝到用户态进程的内存中，然后返回结果，进程才解除阻塞。
-阻塞IO有一个很大的问题：阻塞时间大部分花在等待数据接收完成，很耗时且耗资源。
+​	阻塞IO有一个很大的问题：阻塞时间大部分花在等待数据接收完成，很耗时且耗资源。
 
 ## nonblocking IO：
 
@@ -23,6 +23,12 @@
 ​	即异步IO，进程发起aio_read()后，不会阻塞。kernel直接返回。kernel会自己等待数据的准备，等完成后直接将数据拷贝到用户内存中，一切完成后，kernel会给进程发送一个singal，通知他read已经完成了（关于异步IO，其实不太了解具体有哪些应用实现）
 
 
+
+# 典型的blocking IO 是如何实现的
+
+​	首先要明确一个概念：**每个Socket都有一个等待队列**，用来存放**等待操作Socket**的进程，当进程A调用recvfrom()从socket1的接收缓冲区读取数据时，如缓冲区有数据，则直接读取。如没有数据，**进程A会让OS使自己进入挂载到socket1的等待队列中，此时进程A变为阻塞状态。**
+
+​	当网卡接收到发给socket1的数据后，网卡会先将数据传送到内存，然后网卡会通知CPU有数据到达。CPU此时会做两件事：1.将内存的数据写到socket1的接收缓冲区内 2.唤醒进程，当进程A被CPU调度到后（看图解，貌似是直接插队）此时recvfrom()就能读到缓冲区内的数据了。
 
 # IO多路复用在Linux下的不同实现
 
@@ -94,4 +100,52 @@ struct pollfd {
 
 # **epoll()**
 
-​	
+​	epoll()三个主要系统函数
+
+```c
+/**
+    创建一个ep_fd对象（也可以当作是eventpoll对象）并返回，size用来告诉内核这个监听的数目一共有多大，注意这里的size和select的maxfdp，epoll的size只是一个大小建议。
+    ep_fd对象会占用一个fd值（epoll完后需要close()来关闭ep_fd）。
+**/
+int epoll_create(int size)；
+/**
+    epfd:上面创建的ep_fd。
+    op:对需要监听的fd进行op操作，op操作有三种：EPOLL_CTL_ADD（新增fd监听）、EPOLL_CTL_DEL（删除fd监听）、EPOLL_CTL_MOD（修改fd监听）。
+    fd：需要监听的fd。
+    event：告诉内核需要对这个fd的监听什么事件，本质是一个epoll_event结构体。
+    epoll_ctl()主要作用是将某个fd(fd)和待监听事件(event)转换为epoll_item，并注册到ep_fd(epfd)的一颗红黑树里，
+**/
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)；
+/**
+    epfd：上面创建的ep_gfd。
+    events：用来从内核获取发生的事件，是一个集合。
+    maxevents：events集合的大小，不能超过epoll_create()的size。
+    timeout：超时时间，如果超时则返回0。如果没有超时时间，则会一直阻塞。
+**/
+int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
+```
+
+​	调用epoll_create()时，会创建一个ep_fd(也就是eventpoll对象)，这个对象包含了两个关键的属性：
+
+```c
+struct eventpoll {
+　　...
+　　//红黑树
+　　struct rb_root rbr;
+　　//双向链表
+　　struct list_head rdllist;
+　　...
+};
+```
+
+​	调用epoll_ctl()时，会将某个fd(fd)和待监听事件(event)转换为epoll_item，并注册到ep_fd(epfd)的rbr红黑树里，同时给这个epoll_item**注册一个回调函数（即ep_poll_callback）到内核**（其实这一点不是特别理解），回调函数是与**设备驱动程序**建立关系，当fd的事件触发或**已经触发**后，设备驱动程序会识别出来并触发回调函数，回调函数触发后会将该epoll_item加入到rdllist双向链表里。	
+
+​	调用epoll_wait()时，本质只是检查ep_fd的**rdllist是否有epoll_item**，如果不为空则将epoll_item与其数量返回，为空则**进程会挂载到eventpoll的等待队列里进行阻塞**，直到timeout超时，如果没有timeout则一直阻塞，直到rdllist内有epoll_item。回调函数将epoll_item添加到rdllist的同时，会唤醒epoll_item里阻塞的进程，进程被CPU调度到后可以从fdllist中得知哪些fd(socket)就绪了，从而进行下一步操作（如读取）。
+
+​	总得来说：epoll_create()新建eventpoll、epoll_ctl()把fd与事件注册到eventpoll、epoll_wait()等待eventpoll里的fd因事件触发后被添加到fdllist里
+
+​	epoll()有两种触发方式：EPOLLLT、EPOLLET
+
+​	EPOLLLT（水平触发）：假设收缓冲区有100Byte数据到来，第一次epoll_wait()触发，进程只读了其中50Byte，剩余50Byte在收缓冲区。第二次epoll_wait()会触发，让进程读剩下的50Byte。如果进程还是不读，第三次epoll_wait()也会触发， 让进程继续读那50Byte。**即只要socket缓冲区内有数据可读，每一次epoll_wait()都会返回就绪事件。**
+
+​	EPOLLET（边缘触发）：假设收缓冲区有100Byte数据到来，第一次epoll_wait()触发，进程只读了其中50Byte，剩余50Byte在收缓冲区。**第二次epoll_wait()不会触发**，剩余的50Byte会一直在收缓冲区里，之后的epoll_wait()都不会触发，**直到有新的数据来到收缓冲区，epoll_wait()才会触发。**

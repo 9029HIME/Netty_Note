@@ -1,6 +1,7 @@
-package com.genn.N10_TCP;
+package com.genn.N10_TCP.Server;
 
-import com.genn.N05_Netty.Handler.NettyServerHandler;
+import com.genn.N10_TCP.CommomHandler.MessageDecoder;
+import com.genn.N10_TCP.Server.Handler.TCPServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -28,7 +29,8 @@ public class TCPServerDemo {
                     childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new TCPServerHandler());  //获取channel的pipeLine
+                    ch.pipeline().
+                            addLast(new MessageDecoder()).addLast(new TCPServerHandler());
                 }
             });  //设置Handler
 

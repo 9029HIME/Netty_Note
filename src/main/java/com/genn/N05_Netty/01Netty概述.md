@@ -73,6 +73,26 @@ static {
 
 ​	当Worker里一个连接的事件触发后，会通过SelectionKey找到socketChannel与socketChannel绑定的ChannelPipeline，并将socketChannel交给ChannelPipeline处理，ChannelPipeline会根据事件类型，调用对应的Handler来处理请求，最后响应给客户端。
 
+### 数量关系：
+
+#### 连接与线程
+
+![image-20210121215851716](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210121215851716.png)
+
+​	假设只有两个workerEventLoop，只有两个线程。可以看出一个eventloop对应一个线程，**即在同一个eventloop里多个连接还是共用一个线程来处理。**
+
+#### 连接与Handler
+
+![image-20210121220004151](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210121220004151.png)
+
+​	一个连接对应一个handler
+
+#### 连接与pipeline
+
+​	![image-20210121220355124](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210121220355124.png)
+
+​	一个连接对应一个pipeline
+
 # Netty源码与模型对应
 
 ## EventLoop

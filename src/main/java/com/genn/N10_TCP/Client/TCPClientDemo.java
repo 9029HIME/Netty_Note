@@ -1,6 +1,8 @@
-package com.genn.N10_TCP;
+package com.genn.N10_TCP.Client;
 
-import com.genn.N05_Netty.Handler.NettyClientHandler;
+import com.genn.N10_TCP.Client.Handler.TCPClientHandler;
+import com.genn.N10_TCP.CommomHandler.MessageDecoder;
+import com.genn.N10_TCP.CommomHandler.MessageEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -21,7 +23,8 @@ public class TCPClientDemo {
                     handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new TCPClientHandler());
+                            ch.pipeline().
+                                    addLast(new MessageEncoder()).addLast(new TCPClientHandler());
                         }
                     });
             System.out.println("客户端配置完成");
