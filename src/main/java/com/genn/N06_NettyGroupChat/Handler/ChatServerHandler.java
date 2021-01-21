@@ -7,6 +7,8 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
+import java.nio.channels.SocketChannel;
+
 public class ChatServerHandler extends SimpleChannelInboundHandler<String> {
     /*
     TODO 这是一个全局的channel集合，整个服务器的socketChannel都在这了
@@ -40,6 +42,7 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+//        System.out.println(String.format("当前线程：%s,当前EventLoop：%s，当前pipeline：%s", Thread.currentThread().getName(),ctx.channel().eventLoop(),ctx.pipeline().hashCode()));
         Channel myself = ctx.channel();
         System.out.println(String.format("[ip为：%s的用户]：%s",myself.remoteAddress(),msg));
         channelGroup.forEach(x->{

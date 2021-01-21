@@ -18,7 +18,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Channel channel = ctx.channel();
-        System.out.println(String.format("当前线程：%s,当前EventLoop：%s", Thread.currentThread().getName(),channel.eventLoop()));
+        System.out.println(String.format("当前线程：%s,当前EventLoop：%s，当前pipeline：%s", Thread.currentThread().getName(),channel.eventLoop(),ctx.pipeline().hashCode()));
         ctx.channel().eventLoop().execute(()->{
             try {
                 Thread.sleep(3000);

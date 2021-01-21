@@ -12,3 +12,33 @@
 
 ​	4.S第一次读取到D1的一部分，第二次读取到D1另一部分+D2（缓冲区过小），即发生了拆包。
 
+​	比如Client端的关键代码，连接成功收到服务器的响应后，给他发100个数据：
+
+```java
+@Override
+public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    for (int i = 0; i < 100; i++) {
+        ByteBuf byteBuf = Unpooled.copiedBuffer("nihaoabcdefghijklmn:" + 1, CharsetUtil.UTF_8);
+        ctx.writeAndFlush(byteBuf);
+    }
+}
+```
+
+​	Server端的关键接收代码：
+
+```java
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    ByteBuf byteBuf = (ByteBuf) msg;
+    byte[] array = new byte[byteBuf.readableBytes()];
+    byteBuf.readBytes(array);
+    String content = new String(array, CharsetUtil.UTF_8);
+    System.out.println("本次收到的内容是"+content);
+}
+```
+
+​	然后我们能看到，Server端的console打印了这样的内容：
+
+​	![image-20210120205155694](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210120205155694.png)
+
+​	可以看到，不仅发生了粘包，还发生了拆包。
