@@ -42,3 +42,17 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception 
 ​	![image-20210120205155694](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210120205155694.png)
 
 ​	可以看到，不仅发生了粘包，还发生了拆包。
+
+
+
+# 粘包、拆包问题解决
+
+​	核心思想是定义好本次请求发出的数据是多少，接收端根据这个数据量定量读取信息。
+
+​	步骤：
+
+​		1.自定义信息体，用自定义的Message类来包装信息并传递
+
+​		2.自定义编码、解码类，将Message按照特定规则进行编码发送，接收端按照特定规则解码发送
+
+​	
